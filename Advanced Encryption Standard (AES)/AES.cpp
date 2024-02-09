@@ -214,7 +214,7 @@ void AES::KeyExpansion(vector<uint8_t> key, vector<uint32_t> w, int Nk)
 
         if(i % Nk == 0)
         {
-            temp = subWord(rotWord(temp)) ^ Rcon[i/Nk - 1];
+            temp = subWord(rotWord(temp)) ^ Rcon[(i/Nk) - 1];
         }
         else if(Nk > 6 && i % Nk == 4)
         {
@@ -494,7 +494,8 @@ void AES::Cipher()
 // CIPHER
 void AES::AddRoundKey(uint8_t (&state)[4][4], vector<uint32_t> w, int index) // pass the location of the offset of the key schedule
 {
-    cout << "XOR with value" << endl;
+
+    cout << "XOR with value " << Nr << endl;
     for(int i = 0; i < 4; i++)
     {
         //cout << "Here" << endl;
@@ -508,8 +509,8 @@ void AES::AddRoundKey(uint8_t (&state)[4][4], vector<uint32_t> w, int index) // 
         // XOR by keyschedule offset [i]
         word ^= w.at(i+index);
         
-        cout << hex << setw(8) << setfill('0') << word << endl;
-        //cout << hex << setw(8) << setfill('0') << w.at(i+index) << endl;
+        //cout << hex << setw(8) << setfill('0') << word << endl;
+        cout << hex << setw(8) << setfill('0') << w.at(i+index) << endl;
         // put back in state
         uint8_t s0 = static_cast<uint8_t>( (word >> 24) & 0xFF );
         uint8_t s1 = static_cast<uint8_t>( (word >> 16) & 0xFF );
@@ -623,4 +624,260 @@ void AES::MixColumns(uint8_t (&state)[4][4])
         state[2][i] = s0 ^ s1 ^ ffMultiply(0x02, s2) ^ ffMultiply(0x03, s3);
         state[3][i] = ffMultiply(0x03, s0) ^ s1 ^ s2 ^ ffMultiply(0x02, s3);
     }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ---------------------- INV 
+
+uint8_t AES::InvsBoxSub(uint8_t byte)
+{
+        // extract the row and column for the lookup table
+    int row = static_cast<int>( (byte >> 4) & 0xF );
+    int col = static_cast<int>( byte & 0xF );
+
+    return this->InvSBox[(row * 16) + col];
+}
+
+
+
+
+
+
+
+uint32_t AES::InvsubWord(uint32_t word)
+{
+    // extract bytes from word
+    uint8_t b0 = (word >> 24) & 0xFF;
+    uint8_t b1 = (word >> 16) & 0xFF;
+    uint8_t b2 = (word >> 8) & 0xFF;
+    uint8_t b3 = word & 0xFF;
+
+    // create a new word with substituted byte values
+    uint32_t w = static_cast<uint32_t>( InvsBoxSub(b0) ) << 24 |
+                 static_cast<uint32_t>( InvsBoxSub(b1) ) << 16 |
+                 static_cast<uint32_t>( InvsBoxSub(b2) ) << 8 |
+                 static_cast<uint32_t>( InvsBoxSub(b3) );
+
+    return w;
+}
+
+
+
+
+
+
+
+
+
+
+void AES::InvSubBytes(uint8_t (&state)[4][4])
+{
+    for(int i = 0; i < 4; i++)
+    {
+        uint32_t word = static_cast<uint32_t>( state[0][i] ) << 24 |
+                        static_cast<uint32_t>( state[1][i] ) << 16 |
+                        static_cast<uint32_t>( state[2][i] ) << 8 |
+                        static_cast<uint32_t>( state[3][i] );
+        
+        word = InvsubWord(word);
+
+        uint8_t s0 = static_cast<uint8_t>( (word >> 24) & 0xFF );
+        uint8_t s1 = static_cast<uint8_t>( (word >> 16) & 0xFF );
+        uint8_t s2 = static_cast<uint8_t>( (word >> 8) & 0xFF );
+        uint8_t s3 = static_cast<uint8_t>( word & 0xFF );
+
+        state[0][i] = s0;
+        state[1][i] = s1;
+        state[2][i] = s2;
+        state[3][i] = s3;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void AES::InvShiftRows(uint8_t (&state)[4][4])
+{
+    //cout << "-- Shift Rows --" << endl;
+    for(int i = 0; i < 4; i++)
+    {   
+        //cout << "0x " << hex << setw(8) << setfill('0') << static_cast<int>(row) << " " << endl;
+        for(int j = 0; j < i; j++)
+        {
+            // get the row
+            uint32_t row = static_cast<uint32_t>( (state[i][0] << 24) ) |
+                        static_cast<uint32_t>( (state[i][1] << 16) ) |
+                        static_cast<uint32_t>( (state[i][2] << 8) ) |
+                        static_cast<uint32_t>( (state[i][3]) );
+
+            uint8_t r0 = static_cast<uint8_t>( (row >> 24) & 0xFF );
+            uint8_t r1 = static_cast<uint8_t>( (row >> 16) & 0xFF );
+            uint8_t r2 = static_cast<uint8_t>( (row >> 8) & 0xFF );
+            uint8_t r3 = static_cast<uint8_t>( row & 0xFF );
+
+            state[i][0] = r3;
+            state[i][1] = r0;
+            state[i][2] = r1;
+            state[i][3] = r2;
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void AES::InvMixColumns(uint8_t (&state)[4][4])
+{
+    // fixed polynomial matrix a(x)
+    // a[4][4] = 
+    // {
+    //  {0e, 0b, 0d, 09},    
+    //  {09, 0e, 0b, 0d}, 
+    //  {0d, 09, 0e, 0b}, 
+    //  {0b, 0d, 09, 0e} 
+    // };
+
+    //cout << "--- Mix Columns ---" << endl;
+
+    for(int i = 0; i < this->Nb; i++)
+    {
+        uint8_t s0 = state[0][i];
+        uint8_t s1 = state[1][i];
+        uint8_t s2 = state[2][i];
+        uint8_t s3 = state[3][i];
+
+        state[0][i] = ffMultiply(0x0e, s0) ^ ffMultiply(0x0b, s1) ^ ffMultiply(0x0d, s2) ^ ffMultiply(0x09, s3);
+        state[1][i] = ffMultiply(0x09, s0) ^ ffMultiply(0x0e, s1) ^ ffMultiply(0x0b, s2) ^ ffMultiply(0x0d, s3);
+        state[2][i] = ffMultiply(0x0d, s0) ^ ffMultiply(0x09, s1) ^ ffMultiply(0x0e, s2) ^ ffMultiply(0x0b, s3);
+        state[3][i] = ffMultiply(0x0b, s0) ^ ffMultiply(0x0d, s1) ^ ffMultiply(0x09, s2) ^ ffMultiply(0x0e, s3);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void AES::Decipher()
+{
+    // we have state
+    // we have key schedule
+    
+    printKeySchedule();
+
+    // 1) add round key
+    // printState();
+    //cout << this->w.size() / 4 << endl;
+    //printKeySchedule();
+    //cout << "--- START ---" << endl;
+    cout << endl;
+    printState();
+    int index = (Nr*Nb);
+    AddRoundKey(this->state, this->w, index);
+    index -= 4;
+    //cout << "-- AFTER FIRST XOR-- " << endl;
+    cout << endl;
+    cout << endl;
+    printState();
+
+    for(int i = 0; i < Nr - 1; i++)
+    {
+        InvShiftRows(this->state);
+        InvSubBytes(this->state);
+        //cout << i+1 << ") --- AFTER SUB BYTES ---" << endl;
+        //cout << endl;
+        //printState();
+        // loop
+        //ShiftRows(this->state);
+        //cout << i+1 << ") --- AFTER SHIFT ROWS ---" << endl;
+        //cout << endl;
+        //printState();
+        //printState();
+        //MixColumns(this->state);
+        //cout << i+1 << ") --- AFTER MIX COLUMNS ---" << endl;
+        //cout << endl;
+        //printState();
+        cout << endl;
+        
+        AddRoundKey(this->state, this->w, index);
+        InvMixColumns(this->state);
+        //cout << i+1 << ") --- AFTER ROUND KEY ---" << endl;
+        //cout << endl;
+        printState();
+        cout << endl;
+        index -= 4;
+        //printState();
+    }
+
+    // last round
+    InvShiftRows(this->state);
+    InvSubBytes(this->state);
+    //ShiftRows(this->state);
+    AddRoundKey(this->state, this->w, index);
+    //index += 4;
+    //cout << "--- CIPHER TEXT ---" << endl;
+    printState();
 }
