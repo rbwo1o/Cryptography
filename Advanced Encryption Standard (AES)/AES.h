@@ -12,38 +12,41 @@ using namespace std;
 
 class AES
 {
-    public:
-        // symbols
+    private:
+        // Symbols
         int Nb; // Number of columns (32-bit words) comprising the State. For this standard, Nb = 4.
         int Nk; // Number of 32-bit words comprising the Cipher Key. For this standard, Nk = 4, 6, or 8
         int Nr; // Number of rounds, which is a function of Nk and Nb (which is fixed). For this standard, Nr = 10, 12, or 14
-
-
         uint8_t state[4][4]; // the AES algorithm’s operations are performed on a two-dimensional array of bytes called the State.
-        vector<uint8_t> key;
-        vector<uint32_t> w; // KEY SCHEDULE
+        vector<uint8_t> key; // A vector os bytes that represents the key
+        vector<uint32_t> w; // Key Schedule - A vector containing unique keys used for each round of encryption and decryption
         
 
-        // finite field arithmetic
+        // Finite Field Arithmetic
         uint8_t ffAdd(uint8_t, uint8_t);
         uint8_t xtime(uint8_t);
         uint8_t ffMultiply(uint8_t, uint8_t);
 
 
-        // key expansion
+        // Key Expansion 
         uint32_t subWord(uint32_t);
         uint32_t rotWord(uint32_t);
         void KeyExpansion(vector<uint8_t>, vector<uint32_t>, int);
-        vector<uint32_t> Rcon;
+        vector<uint32_t> Rcon; // The constant round word array used in key expansion
+        uint32_t InvsubWord(uint32_t); // Inverse function used to substitute words from the Inverse S-Box table
         
 
-
-        // cipher
-        void Cipher();
+        // Cipher Methods
         void AddRoundKey(uint8_t (&)[4][4], vector<uint32_t>, int);
         void SubBytes(uint8_t (&)[4][4]);
         void ShiftRows(uint8_t (&)[4][4]);
         void MixColumns(uint8_t (&)[4][4]);
+
+
+        // Inverse Cipher Methods
+        void InvSubBytes(uint8_t (&)[4][4]);
+        void InvShiftRows(uint8_t (&)[4][4]);
+        void InvMixColumns(uint8_t (&)[4][4]);
 
 
         // S-Box Table
@@ -68,11 +71,7 @@ class AES
         };
 
 
-
-
-
-
-        uint8_t InvsBoxSub(uint8_t);
+        // Inverse S-Box Table
         uint8_t InvSBox[256] = 
         {
             0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38, 0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb,
@@ -94,20 +93,6 @@ class AES
         };
 
 
-
-
-
-        uint32_t InvsubWord(uint32_t);
-
-        void InvSubBytes(uint8_t (&)[4][4]);
-        void InvShiftRows(uint8_t (&)[4][4]);
-        void InvMixColumns(uint8_t (&)[4][4]);
-
-        void Decipher();
-
-        // class functions
-        AES(string, string);
-
         // Helper Functions
         void printState();
         void printKey();
@@ -119,7 +104,10 @@ class AES
         uint8_t InvsBoxSub(uint8_t);
 
 
-    //public:
+    public:
+        AES(string, string); // Constructor
+        void Cipher(); // Cipher
+        void Decipher(); // Inverse Cipher
 
 };
 

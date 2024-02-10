@@ -160,27 +160,6 @@ uint32_t AES::subWord(uint32_t word)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //--------------------------------------
 void AES::KeyExpansion(vector<uint8_t> key, vector<uint32_t> w, int Nk)
 {
@@ -233,17 +212,21 @@ void AES::KeyExpansion(vector<uint8_t> key, vector<uint32_t> w, int Nk)
 
 
 
-
+/* Function: initRcon
+ * Parameters: An integer representing the number of rounds
+ * Return: None
+ * Description: This function initializes the constant round word array used in key expansion
+*/
 void AES::initRcon(int Nr)
 {
     uint8_t rvalue = 0x01;
 
-    cout << "--- RCON ---" << endl;
+    //cout << "--- RCON ---" << endl;
     for(int i = 0; i < Nr; i++)
     {
         uint32_t rword = static_cast<uint32_t>( rvalue ) << 24; // {x[i-1]}, {00}, {00}, {00} -> {x[i-1]000000}
         
-        cout << "0x" << hex << static_cast<int>(rword) << endl;
+        //cout << "0x" << hex << static_cast<int>(rword) << endl;
         this->Rcon.push_back(rword);
         rvalue = xtime(rvalue);
     }
@@ -258,7 +241,11 @@ void AES::initRcon(int Nr)
 
 
 
-
+/* Function: printKey()
+ * Parameters: None
+ * Return: None
+ * Description: This function prints the key vector in hexadecimal notation
+*/
 void AES::printKey()
 {
     cout << "--- print key ---" << endl;
@@ -274,7 +261,11 @@ void AES::printKey()
 
 
 
-
+/* Function: printKeySchedule
+ * Parameters: None
+ * Return: None
+ * Description: This function prints each key to be used in the key schedule w
+*/
 void AES::printKeySchedule()
 {
     // TEST
@@ -318,7 +309,11 @@ void AES::printKeySchedule()
 
 
 
-
+/* Function: Constructor
+ * Parameters: The input string, and key string to be used by AES
+ * Return: an AES object
+ * Description: The contrsuctor intiializes the input, key, and dependency variables that are used throughout the algorithm
+*/
 AES::AES(string input, string key)
 {
     // input is a fixed length of 16 bytes ??
@@ -336,7 +331,11 @@ AES::AES(string input, string key)
 
 
 
-
+/* Function: initState
+ * Parameters: a string representing the input bytes
+ * Return: None
+ * Desciption: This function initializes the 2D state array by converting the byte string into bytes and placing the bytes into the array in column major order
+*/
 void AES::initState(string input)
 {
     vector<int> bytes;
@@ -356,6 +355,11 @@ void AES::initState(string input)
 }
 
 
+/* Function: printState
+ * Parameters: None
+ * Return: None
+ * Description: This function prints the 2D state array
+*/
 void AES::printState()
 {
     cout << "--- state ---" << endl;
@@ -374,7 +378,11 @@ void AES::printState()
 
 
 
-
+/* Function: initKey
+ * Parameters: a string value representing the key
+ * Return: None
+ * Description: This function initializes the key vector atttribute by converting the key string into an array of bytes to be used by AES
+*/
 void AES::initKey(string key)
 {
     switch((key.length() / 2) * 8) // 128, 192, 256
@@ -432,7 +440,11 @@ void AES::initKey(string key)
 
 
 
-
+/* Function: Cipher
+ * Parameters: None
+ * Return: None
+ * Description: This function performs AES cipher on the input state with the key as decribed in AES
+*/
 void AES::Cipher()
 {
     // we have state
@@ -491,7 +503,12 @@ void AES::Cipher()
 
 
 
-// CIPHER
+
+/* AddRoundKey
+ * Parameters: A reference to the 2D state array, the Key Schedule vector, and the index of the round key to XOR
+ * Return: None
+ * Description: This transformation adds a round key to the state using XOR
+*/
 void AES::AddRoundKey(uint8_t (&state)[4][4], vector<uint32_t> w, int index) // pass the location of the offset of the key schedule
 {
 
@@ -531,7 +548,11 @@ void AES::AddRoundKey(uint8_t (&state)[4][4], vector<uint32_t> w, int index) // 
 
 
 
-
+/* Function: SubBytes
+ * Parameters: A reference to the 2D state array
+ * Return: None
+ * Description: This transformation substitutes each byte in the state with its corresponding value from the S-Box
+*/
 void AES::SubBytes(uint8_t (&state)[4][4])
 {
     for(int i = 0; i < 4; i++)
@@ -563,7 +584,11 @@ void AES::SubBytes(uint8_t (&state)[4][4])
 
 
 
-
+/* Function: ShiftRows
+ * Parameters: A reference to the 2D state array
+ * Return: None
+ * Description: This transformation performs a circular shift on each row in the state
+*/
 void AES::ShiftRows(uint8_t (&state)[4][4])
 {
     //cout << "-- Shift Rows --" << endl;
@@ -598,7 +623,11 @@ void AES::ShiftRows(uint8_t (&state)[4][4])
 
 
 
-
+/* Function: MixColumns
+ * Parameters: A reference to the 2D state array
+ * Return: None
+ * Description: his transformation treats each column in state as a four-term polynomial. This polynomial is multiplied (modulo another polynomial) by a fixed polynomial with coefficients
+*/
 void AES::MixColumns(uint8_t (&state)[4][4])
 {
     // fixed polynomial matrix a(x)
@@ -691,7 +720,11 @@ uint32_t AES::InvsubWord(uint32_t word)
 
 
 
-
+/* Function: InvSubBytes
+ * Parameters: A reference to the 2D state array
+ * Return: None
+ * Description: This transformation substitutes each byte in the state with its corresponding value from the inverse S-Box, thus reversing the effect of a subBytes() operation
+*/
 void AES::InvSubBytes(uint8_t (&state)[4][4])
 {
     for(int i = 0; i < 4; i++)
@@ -732,7 +765,11 @@ void AES::InvSubBytes(uint8_t (&state)[4][4])
 
 
 
-
+/* Function: InvShiftRows
+ * Parameters: A reference to the 2D state array
+ * Return: None
+ * Description: This transformation performs the inverse of shiftRows() on each row in the state
+*/
 void AES::InvShiftRows(uint8_t (&state)[4][4])
 {
     //cout << "-- Shift Rows --" << endl;
@@ -780,7 +817,11 @@ void AES::InvShiftRows(uint8_t (&state)[4][4])
 
 
 
-
+/* Function: InvMixColumns
+ * Parameters: A reference to a 2D state array
+ * Return: None
+ * Description: This transformation is the inverse of mixColumns
+*/
 void AES::InvMixColumns(uint8_t (&state)[4][4])
 {
     // fixed polynomial matrix a(x)
@@ -820,7 +861,11 @@ void AES::InvMixColumns(uint8_t (&state)[4][4])
 
 
 
-
+/* Function: Decipher
+ * Parameters: None
+ * Return: None
+ * Description: This function performs AES inverse cipher on the input state with the key as decribed in AES
+*/
 void AES::Decipher()
 {
     // we have state
